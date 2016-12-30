@@ -65,6 +65,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
     @Override void visitPlugins(MethodCallExpression call) {}
     @Override void visitTask(MethodCallExpression call, String name, Map<String, String> args) {}
     @Override void visitBuildscript(MethodCallExpression call) {}
+    @Override void visitRepositories(MethodCallExpression call) {}
 
     protected boolean isIgnored() {
         globalIgnoreOn || rulesToIgnore.collect { LintRuleRegistry.findRules(it) }.flatten().contains(ruleId)
@@ -182,6 +183,7 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
             boolean inConfigurationsBlock = false
             boolean inPluginsBlock = false
             boolean inBuildscriptBlock = false
+            boolean inRepositoriesBlock = false
 
             @Override
             final void visitMethodCallExpression(MethodCallExpression call) {
@@ -223,6 +225,11 @@ abstract class GradleLintRule extends AbstractAstVisitor implements Rule, Gradle
                     super.visitMethodCallExpression(call)
                     GradleLintRule.this.visitBuildscript(call)
                     inBuildscriptBlock = false
+                } else if (methodName == 'repositories') {
+                    inRepositoriesBlock = true
+                    super.visitMethodCallExpression(call)
+                    GradleLintRule.this.visitRepositories(call)
+                    inRepositoriesBlock = false
                 } else if (methodName == 'dependencies') {
                     inDependenciesBlock = true
                     super.visitMethodCallExpression(call)
